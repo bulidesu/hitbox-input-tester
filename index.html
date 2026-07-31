@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#121413">
+  <title>Hit Box 按键检测</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#tester" aria-label="Hit Box 检测器首页">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span><strong>HIT BOX</strong><small>INPUT CHECK</small></span>
+    </a>
+    <div class="connection-badge" id="connectionBadge" role="status" aria-live="polite">
+      <span class="status-dot"></span>
+      <span id="connectionText">等待控制器</span>
+    </div>
+  </header>
+
+  <main id="tester">
+    <section class="intro" aria-labelledby="pageTitle">
+      <div>
+        <p class="eyebrow">STREET FIGHTER 6 · CONTROLLER DIAGNOSTICS</p>
+        <h1 id="pageTitle">每一下，都要有回应。</h1>
+        <p class="lede">连接 Hit Box，按任意键开始检测。也可先用键盘验证页面：A / S / D / 空格控制方向，U I O P / J K L ; 控制攻击。</p>
+      </div>
+      <div class="completion" aria-label="检测进度">
+        <span id="testedCount">0 / 12</span>
+        <small>按键已检测</small>
+        <div class="completion-track"><span id="completionBar"></span></div>
+      </div>
+    </section>
+
+    <section class="control-strip" aria-label="设备控制">
+      <label class="device-field" for="gamepadSelect">
+        <span>输入设备</span>
+        <select id="gamepadSelect" aria-label="选择输入设备">
+          <option value="keyboard">键盘模拟</option>
+        </select>
+      </label>
+      <button class="button secondary scan-button" id="scanButton" type="button" title="重新扫描控制器">
+        <span class="button-icon" aria-hidden="true">↻</span><span class="button-text">重新扫描</span>
+      </button>
+      <button class="button primary" id="mapButton" type="button">逐键校准</button>
+      <button class="button ghost" id="resetButton" type="button">重置统计</button>
+    </section>
+
+    <section class="controller-shell" aria-labelledby="boardTitle">
+      <div class="shell-head">
+        <div>
+          <p class="section-kicker">LIVE INPUT</p>
+          <h2 id="boardTitle">实时按键</h2>
+        </div>
+        <div class="live-readout" id="liveReadout">没有输入</div>
+      </div>
+
+      <div class="button-layout">
+        <div class="direction-zone" aria-label="方向键">
+          <div class="control-node direction" data-control="left">
+            <span class="node-label">←</span><span class="node-name">左</span><span class="node-meta">A</span>
+          </div>
+          <div class="control-node direction" data-control="down">
+            <span class="node-label">↓</span><span class="node-name">下</span><span class="node-meta">S</span>
+          </div>
+          <div class="control-node direction" data-control="right">
+            <span class="node-label">→</span><span class="node-name">右</span><span class="node-meta">D</span>
+          </div>
+          <div class="control-node direction jump" data-control="up">
+            <span class="node-label">↑</span><span class="node-name">上</span><span class="node-meta">空格</span>
+          </div>
+        </div>
+
+        <div class="attack-zone" aria-label="攻击键">
+          <div class="control-node attack punch" data-control="lp"><span class="node-label">LP</span><span class="node-name">轻拳</span><span class="node-meta">U</span></div>
+          <div class="control-node attack punch" data-control="mp"><span class="node-label">MP</span><span class="node-name">中拳</span><span class="node-meta">I</span></div>
+          <div class="control-node attack punch" data-control="hp"><span class="node-label">HP</span><span class="node-name">重拳</span><span class="node-meta">O</span></div>
+          <div class="control-node attack utility" data-control="p4"><span class="node-label">P4</span><span class="node-name">辅助</span><span class="node-meta">P</span></div>
+          <div class="control-node attack kick" data-control="lk"><span class="node-label">LK</span><span class="node-name">轻脚</span><span class="node-meta">J</span></div>
+          <div class="control-node attack kick" data-control="mk"><span class="node-label">MK</span><span class="node-name">中脚</span><span class="node-meta">K</span></div>
+          <div class="control-node attack kick" data-control="hk"><span class="node-label">HK</span><span class="node-name">重脚</span><span class="node-meta">L</span></div>
+          <div class="control-node attack utility" data-control="k4"><span class="node-label">K4</span><span class="node-name">辅助</span><span class="node-meta">;</span></div>
+        </div>
+      </div>
+      <p class="board-note" id="boardNote">圆圈亮起表示收到输入；圈内下方数字为本次检测的触发次数。</p>
+    </section>
+
+    <section class="diagnostics" aria-label="诊断信息">
+      <article class="metric">
+        <span class="metric-label">当前输入</span>
+        <strong id="currentInput">—</strong>
+        <small id="holdTime">等待输入</small>
+      </article>
+      <article class="metric">
+        <span class="metric-label">方向冲突 / SOCD</span>
+        <strong id="socdState">无冲突</strong>
+        <small>相反方向同时按下时标记为中立</small>
+      </article>
+      <article class="metric">
+        <span class="metric-label">输入信号</span>
+        <strong id="signalState">待机</strong>
+        <small id="signalDetail">等待设备输入</small>
+      </article>
+    </section>
+
+    <section class="history-section" aria-labelledby="historyTitle">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">EVENT LOG</p>
+          <h2 id="historyTitle">输入记录</h2>
+        </div>
+        <div class="history-actions">
+          <button class="icon-button" id="pauseButton" type="button" aria-label="暂停记录" title="暂停记录">Ⅱ</button>
+          <button class="button ghost compact" id="clearHistoryButton" type="button">清空记录</button>
+        </div>
+      </div>
+      <ol class="history-list" id="historyList" aria-live="polite">
+        <li class="empty-history" id="emptyHistory">按下任意键后，输入会出现在这里。</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer>
+    <span>本页只在浏览器本地运行，不会上传任何输入。</span>
+    <span>Gamepad API · 60 Hz polling</span>
+  </footer>
+
+  <dialog id="mappingDialog" aria-labelledby="mappingTitle">
+    <form method="dialog" class="mapping-card">
+      <div class="mapping-top">
+        <div>
+          <p class="section-kicker">BUTTON MAPPING</p>
+          <h2 id="mappingTitle">逐键校准</h2>
+        </div>
+        <button class="icon-button close-button" id="closeMappingButton" value="cancel" aria-label="关闭校准" type="submit">×</button>
+      </div>
+      <div class="mapping-progress"><span id="mappingProgressBar"></span></div>
+      <div class="mapping-target">
+        <span>请按下 Hit Box 上的</span>
+        <strong id="mappingTarget">左</strong>
+        <small id="mappingHint">等待手柄输入…</small>
+      </div>
+      <div class="mapping-steps" id="mappingSteps" aria-label="校准步骤"></div>
+      <div class="mapping-actions">
+        <button class="button ghost" id="restoreMappingButton" type="button">恢复默认</button>
+        <button class="button secondary" id="skipMappingButton" type="button">跳过此键</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
